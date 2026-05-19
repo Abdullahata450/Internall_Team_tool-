@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseDesk — Internal Team Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-workspace: #1F1F1F;
+      --bg-surface: #F5F4F2;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #F0EFEC;
+      --bg-hover: #EFEFEF;
+      --border: #DADADA;
+      --border-light: #EAEAEA;
+      --text-primary: #111111;
+      --text-secondary: #6A6A6A;
+      --text-muted: #9C9C9C;
+      --accent: #E54E1B;
+      --accent-dim: rgba(229, 78, 27, 0.08);
+      --red: #D73A31;
+      --red-dim: rgba(215, 58, 49, 0.08);
+      --green: #2A7A4B;
+      --green-dim: rgba(42, 122, 75, 0.08);
+      --blue: #2B6EA8;
+      --blue-dim: rgba(43, 110, 168, 0.08);
+      --amber: #B8860B;
+      --amber-dim: rgba(184, 134, 11, 0.08);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --sidebar-w: 220px;
+      --header-h: 48px;
+      --space: 16px;
+    }
+
+    html { font-size: 15px; }
+    body {
+      font-family: "Inter", -apple-system, sans-serif;
+      background: var(--bg-workspace);
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1440px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      min-height: calc(100vh - 40px);
+      position: relative;
+    }
+
+    .app-shell::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: var(--radius);
+      pointer-events: none;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-sidebar);
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+    .sidebar-workspace {
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-workspace .ws-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+    .sidebar-workspace .ws-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+    }
+    .sidebar-nav {
+      padding: 8px 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 18px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-right: 2px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .sidebar-nav a:hover { color: var(--text-primary); background: var(--bg-hover); }
+    .sidebar-nav a.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-right-color: var(--accent);
+    }
+    .sidebar-nav a .nav-icon { font-size: 13px; width: 18px; text-align: center; opacity: 0.7; }
+    .sidebar-nav a.active .nav-icon { opacity: 1; }
+    .sidebar-nav a .nav-badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 20px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .sidebar-nav .nav-divider { height: 1px; background: var(--border); margin: 6px 18px; }
+    .sidebar-nav .new-task-btn {
+      margin: 8px 14px;
+      padding: 8px 14px;
+      background: var(--text-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .sidebar-nav .new-task-btn:hover { opacity: 0.85; }
+    .sidebar-user {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    .sidebar-user .u-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 10px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .sidebar-user .u-info { flex: 1; min-width: 0; }
+    .sidebar-user .u-name { font-size: 12.5px; font-weight: 600; }
+    .sidebar-user .u-role { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .sidebar-user .u-switch {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .sidebar-user .u-switch:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* ─── USER SWITCHER DROPDOWN ─── */
+    .switcher-dropdown {
+      position: fixed;
+      bottom: 65px;
+      left: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      z-index: 200;
+      min-width: 200px;
+    }
+    .switcher-dropdown .sw-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12.5px;
+      transition: background 0.1s;
+    }
+    .switcher-dropdown .sw-item:hover { background: var(--bg-hover); }
+    .switcher-dropdown .sw-item.active { background: var(--accent-dim); color: var(--accent); }
+
+    /* ─── TOP HEADER ─── */
+    .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; border-radius: 0 var(--radius) var(--radius) 0; overflow: hidden; }
+    .topbar {
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .topbar h2 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-right .date-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+    .topbar-right .top-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+    }
+    .topbar-right .top-icon {
+      background: none;
+      border: none;
+      width: 28px; height: 28px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+      transition: all 0.15s;
+    }
+    .topbar-right .top-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* ─── CONTENT ─── */
+    .content { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-surface); }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeSlide 0.25s ease; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ─── TYPOGRAPHY ─── */
+    .label-upper {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .text-mute { color: var(--text-secondary); font-size: 13px; }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .card-header h3 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .card-body { padding: 14px; }
+
+    /* ─── STAT ROW ─── */
+    .stat-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat-cell {
+      flex: 1;
+      min-width: 100px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .stat-cell .stat-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stat-cell .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 2px;
+      color: var(--text-primary);
+    }
+    .stat-cell .stat-value.accent { color: var(--accent); }
+    .stat-cell .stat-value.red { color: var(--red); }
+    .stat-cell .stat-value.green { color: var(--green); }
+    .stat-cell.active-filter { border-color: var(--accent); background: var(--accent-dim); }
+
+    /* ─── HERO CARD ─── */
+    .hero-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .hero-card .hero-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 17px;
+      flex-shrink: 0;
+    }
+    .hero-card .hero-body { flex: 1; }
+    .hero-card .hero-body .hero-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .hero-card .hero-body .hero-role {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .hero-card .hero-body .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg-hover);
+      margin-top: 4px;
+    }
+    .hero-card .hero-body .hero-status .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .hero-card .hero-section { margin-top: 14px; }
+    .hero-card .hero-section .hs-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .hero-card .hero-section .hs-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* ─── EMPLOYEE GRID ─── */
+    .emp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .emp-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .emp-card:hover { border-color: var(--accent); }
+    .emp-card .emp-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .emp-card .emp-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 11px;
+      flex-shrink: 0;
+    }
+    .emp-card .emp-name { font-size: 13px; font-weight: 600; }
+    .emp-card .emp-role { font-size: 11px; color: var(--text-secondary); }
+    .emp-card .emp-status {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .emp-card .emp-body .eb-label {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1px;
+    }
+    .emp-card .emp-body .eb-value {
+      font-size: 12.5px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    /* ─── ALERTS ─── */
+    .alerts-panel { margin-bottom: 16px; }
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12.5px;
+    }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-item .alert-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .alert-item .alert-text { flex: 1; }
+    .alert-item .alert-time { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+
+    /* ─── ACTIVITY FEED ─── */
+    .feed-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item .f-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 9px;
+      flex-shrink: 0;
+    }
+    .feed-item .f-body { flex: 1; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); }
+    .feed-item .f-body strong { color: var(--text-primary); font-weight: 600; }
+    .feed-item .f-body .f-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .feed-item .f-blocker {
+      margin-top: 4px; padding: 4px 8px; background: var(--red-dim);
+      border-radius: 4px; font-size: 11px; color: var(--red); display: inline-block;
+    }
+
+    /* ─── FORM ─── */
+    .form-card { max-width: 580px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group .fg-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .window-tabs { display: flex; gap: 4px; background: var(--bg-hover); border-radius: var(--radius-sm); padding: 3px; }
+    .window-tabs button {
+      flex: 1; padding: 7px 14px;
+      border: none; border-radius: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: "Inter", sans-serif;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .window-tabs button.active { background: #fff; color: var(--text-primary); border: 1px solid var(--border); }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text-primary);
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      transition: border-color 0.15s;
+    }
+    textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    textarea { min-height: 68px; resize: vertical; font-size: 12.5px; }
+
+    /* Production-level polish */
+    .btn-primary:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .continue-task:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+    .stat-cell:hover { border-color: var(--accent); }
+    .emp-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .task-item:hover { background: var(--bg-hover); }
+    .feed-item:hover { background: #fafafa; }
+    .dt-table tr:hover { background: var(--bg-hover); }
+    select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+    .task-prev-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; background: var(--bg-hover);
+      border-radius: 4px; margin-bottom: 4px;
+      font-size: 12.5px;
+    }
+    .task-prev-row .tp-check {
+      width: 16px; height: 16px; border-radius: 3px;
+      border: 1.5px solid var(--border); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.15s;
+    }
+    .task-prev-row .tp-check.done { background: var(--green); border-color: var(--green); }
+    .task-prev-row .tp-check.done::after { content: '✓'; color: #fff; font-size: 9px; font-weight: 700; }
+    .task-prev-row .tp-check.in-progress { background: var(--amber); border-color: var(--amber); }
+    .task-prev-row .tp-check.in-progress::after { content: '↻'; color: #fff; font-size: 10px; font-weight: 700; }
+    .task-prev-row .tp-text { flex: 1; }
+    .task-prev-row .tp-pend { font-size: 10px; color: var(--amber); font-weight: 500; }
+
+    .continue-task {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: #fff; cursor: pointer; transition: all 0.15s; margin-bottom: 4px;
+    }
+    .continue-task:hover { border-color: var(--accent); }
+    .continue-task.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .continue-task .ct-indicator {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; transition: all 0.15s;
+    }
+    .continue-task.selected .ct-indicator { background: var(--accent); border-color: var(--accent); }
+    .continue-task.selected .ct-indicator::after { content: '✓'; }
+    .continue-task .ct-title { flex: 1; font-size: 13px; font-weight: 500; }
+    .continue-task .ct-meta { font-size: 10px; color: var(--text-muted); }
+    .continue-task .ct-badge {
+      font-size: 9px; background: var(--amber-dim); color: var(--amber);
+      padding: 1px 8px; border-radius: 20px; font-weight: 500;
+    }
+    .yesterday-block {
+      font-size: 12px; color: var(--text-secondary); line-height: 1.7;
+      padding: 6px 0;
+    }
+    .yesterday-block .yb-item {
+      display: flex; align-items: center; gap: 6px; padding: 2px 0;
+    }
+    .yesterday-block .yb-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0;
+    }
+    .yesterday-block .yb-dot.muted { background: var(--text-muted); }
+
+    .new-task-add {
+      display: flex; gap: 6px; margin-top: 6px;
+    }
+    .new-task-add input { flex: 1; }
+    .new-task-add button {
+      width: 32px; height: 32px; border-radius: 4px;
+      border: 1px dashed var(--border); background: transparent;
+      color: var(--text-muted); cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .new-task-add button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .new-task-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 10px; background: var(--bg-hover);
+      border-radius: 4px; margin-bottom: 3px;
+      font-size: 12.5px;
+    }
+    .new-task-item .nt-text { flex: 1; }
+    .new-task-item .nt-del {
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer; font-size: 14px;
+      padding: 0; line-height: 1;
+    }
+    .new-task-item .nt-del:hover { color: var(--red); }
+
+    .btn-primary {
+      padding: 8px 20px;
+      background: var(--text-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      padding: 8px 16px;
+      background: #fff;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: "Inter", sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* ─── TASKS ─── */
+    .tasks-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+    .tasks-toolbar .filters { display: flex; gap: 6px; }
+    .tasks-toolbar .filters select {
+      padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px;
+      background: #fff; color: var(--text-secondary);
+      font-family: "Inter", sans-serif; font-size: 11px;
+    }
+    .task-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      transition: border-color 0.15s;
+    }
+    .task-item:hover { border-color: var(--text-muted); }
+    .task-item .t-check {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 1.5px solid var(--border); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px; transition: all 0.15s;
+    }
+    .task-item .t-check.done { background: var(--green); border-color: var(--green); }
+    .task-item .t-check.done::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 700; }
+    .task-item .t-body { flex: 1; }
+    .task-item .t-title { font-size: 13px; font-weight: 500; }
+    .task-item .t-title.done { text-decoration: line-through; color: var(--text-muted); }
+    .task-item .t-meta { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+    .task-item .t-meta span { font-size: 10.5px; color: var(--text-secondary); }
+    .task-item .t-meta .tag {
+      background: var(--bg-hover); padding: 1px 7px; border-radius: 20px;
+      font-size: 10px; font-weight: 500;
+    }
+    .task-item .t-pend {
+      font-size: 10px; color: var(--accent); font-weight: 500;
+      display: inline-flex; align-items: center; gap: 3px;
+    }
+    .task-item .t-collab {
+      margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-secondary);
+    }
+    .task-item .t-collab .ca {
+      width: 20px; height: 20px; border-radius: 50%; font-size: 8px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid #fff; margin-right: -5px;
+    }
+
+    /* ─── BREAK ─── */
+    .break-panel { max-width: 400px; margin: 0 auto; text-align: center; }
+    .break-panel .bp-timer {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 60px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 16px 0;
+      letter-spacing: 0.02em;
+    }
+    .break-panel .bp-timer.warning { color: var(--amber); }
+    .break-panel .bp-timer.danger { color: var(--red); }
+    .break-panel .bp-btn {
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 2px solid var(--green); background: var(--green-dim);
+      color: var(--green); font-family: "Inter", sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; margin: 8px 0;
+    }
+    .break-panel .bp-btn:hover { transform: scale(1.03); }
+    .break-panel .bp-btn.running { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+    .break-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .break-stats .bs {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px;
+    }
+    .break-stats .bs .bs-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .break-stats .bs .bs-value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+
+    /* ─── FEED ─── */
+    .feed-toolbar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .feed-toolbar select, .feed-toolbar input {
+      padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px;
+      background: #fff; color: var(--text-secondary);
+      font-family: "Inter", sans-serif; font-size: 11px;
+    }
+    .feed-toolbar input[type="text"] { width: 160px; }
+
+    /* ─── EMPLOYEES PAGE ─── */
+    .emp-detail { display: flex; gap: 16px; align-items: flex-start; }
+    .emp-detail .ed-main { flex: 1; }
+    .emp-detail .ed-side { width: 240px; flex-shrink: 0; }
+    .detail-tabs { display: flex; gap: 2px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .detail-tabs button {
+      padding: 6px 14px; border: none; background: transparent;
+      color: var(--text-muted); font-family: "Inter", sans-serif;
+      font-size: 11px; font-weight: 500; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all 0.15s;
+    }
+    .detail-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .detail-tabs button:hover { color: var(--text-primary); }
+
+    .profile-card {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 20px; text-align: center; margin-bottom: 12px;
+    }
+    .profile-card .pc-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 20px; margin: 0 auto 8px;
+    }
+    .profile-card .pc-name { font-size: 16px; font-weight: 600; }
+    .profile-card .pc-role { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .profile-card .pc-status {
+      display: inline-block; font-size: 10px; font-weight: 500;
+      padding: 2px 10px; border-radius: 20px; border: 1px solid var(--border);
+    }
+
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .dt-table th { text-align: left; padding: 6px 10px; color: var(--text-muted); font-weight: 500; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .dt-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+    .dt-table td:first-child { color: var(--text-primary); }
+
+    .emp-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; color: var(--text-secondary); cursor: pointer;
+      margin-bottom: 12px; letter-spacing: 0.03em;
+    }
+    .emp-back:hover { color: var(--accent); }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1F1F1F; color: #fff;
+      border-radius: var(--radius-sm); padding: 10px 18px;
+      font-size: 12.5px; font-weight: 500;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 300;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state { padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+    @media (max-width: 860px) {
+      body { padding: 0; }
+      .app-shell { border-radius: 0; min-height: 100vh; border: none; }
+      .sidebar-workspace .ws-name { font-size: 13px; }
+      .content { padding: 14px; }
+      .emp-grid { grid-template-columns: 1fr; }
+      .hero-card { flex-direction: column; }
+      .hero-card .hero-avatar { width: 40px; height: 40px; font-size: 14px; }
+      .emp-detail { flex-direction: column; }
+      .emp-detail .ed-side { width: 100%; }
+      .stat-cell { min-width: 80px; }
+    }
+
+    @media (max-width: 600px) {
+      .sidebar { width: 52px; }
+      .sidebar .sidebar-workspace .ws-name,
+      .sidebar .sidebar-workspace .ws-meta,
+      .sidebar .sidebar-nav a span:not(.nav-icon),
+      .sidebar .sidebar-nav a .nav-badge,
+      .sidebar .sidebar-nav .nav-divider,
+      .sidebar .sidebar-nav .new-task-btn,
+      .sidebar .sidebar-user .u-info,
+      .sidebar .sidebar-user .u-switch { display: none; }
+      .sidebar .sidebar-nav a { justify-content: center; padding: 7px; }
+      .sidebar .sidebar-user { justify-content: center; }
+      .sidebar { width: 48px; }
+      .topbar h2 { font-size: 11px; }
+      .topbar-right .date-label { display: none; }
+      .content { padding: 10px; }
+      .stat-row { gap: 4px; }
+      .stat-cell { padding: 8px 10px; }
+      .stat-cell .stat-value { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-workspace">
+      <div class="ws-name">PulseDesk</div>
+      <div class="ws-meta"><span id="wsMemberCount">7</span> Active Members</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" data-page="dashboard" class="active"><span class="nav-icon">◈</span> <span>Dashboard</span></a>
+      <a href="#" data-page="standups"><span class="nav-icon">◉</span> <span>Standups</span><span class="nav-badge" id="badgeStandups">2</span></a>
+      <a href="#" data-page="tasks"><span class="nav-icon">☰</span> <span>Tasks</span><span class="nav-badge" id="badgeTasks">4</span></a>
+      <a href="#" data-page="employees"><span class="nav-icon">◆</span> <span>Employees</span></a>
+      <a href="#" data-page="break"><span class="nav-icon">◷</span> <span>Break Monitor</span></a>
+      <a href="#" data-page="feed"><span class="nav-icon">◈</span> <span>Activity Log</span></a>
+      <div class="nav-divider"></div>
+      <button class="new-task-btn" id="quickTaskBtn">+ New Task</button>
+    </nav>
+    <div class="sidebar-user" id="sidebarUser">
+      <div class="u-avatar">AK</div>
+      <div class="u-info">
+        <div class="u-name">Ahmed Khan</div>
+        <div class="u-role">Developer</div>
+      </div>
+      <button class="u-switch" id="userSwitchBtn">↻</button>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main-area">
+    <header class="topbar">
+      <h2 id="pageTitle">Dashboard</h2>
+      <div class="topbar-right">
+        <span class="date-label" id="dateDisplay"></span>
+        <button class="top-icon" title="Activity">⚙</button>
+        <div class="top-avatar" id="topAvatar">AK</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ════════════ DASHBOARD ════════════ -->
+      <section class="page active" id="page-dashboard">
+        <div class="stat-row" id="statRow"></div>
+        <div id="heroCardContainer"></div>
+        <div style="margin-top:16px;">
+          <div class="label-upper" style="margin-bottom:8px;">Activity Timeline</div>
+          <div class="card"><div class="card-body" id="activityFeed"></div></div>
+        </div>
+      </section>
+
+      <!-- ════════════ STANDUPS ════════════ -->
+      <section class="page" id="page-standups">
+        <div class="form-card">
+          <div class="form-group">
+            <div class="fg-label">Check-in Window</div>
+            <div class="window-tabs">
+              <button class="active" data-window="company">☀️ 12PM Company</button>
+              <button data-window="dev">⚙️ 2PM Dev</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="fg-label">Yesterday's Work</div>
+            <div id="yesterdayWorkContainer" style="font-size:12px;color:var(--text-secondary);line-height:1.6;padding:6px 0;"></div>
+          </div>
+          <div class="form-group">
+            <div class="fg-label">Continue Pending Tasks (click to select)</div>
+            <div id="continueTasksContainer"></div>
+          </div>
+          <div class="form-group">
+            <div class="fg-label">New Tasks For Today (optional)</div>
+            <div id="newTasksContainer"></div>
+            <div class="new-task-add">
+              <input type="text" id="newTaskInput" placeholder="Only if it's a brand-new task...">
+              <button id="addTaskBtn">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="fg-label">Blockers (optional)</div>
+            <textarea id="blockersInput" placeholder="Any obstacles? Visible to the whole team..."></textarea>
+          </div>
+          <button class="btn-primary" id="submitCheckin">Submit Standup</button>
+        </div>
+      </section>
+
+      <!-- ════════════ TASKS ════════════ -->
+      <section class="page" id="page-tasks">
+        <div class="tasks-toolbar">
+          <div class="filters">
+            <select id="taskFilterStatus"><option value="all">All Status</option><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="done">Done</option></select>
+            <select id="taskFilterProject"><option value="all">All Projects</option></select>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);letter-spacing:0.03em;"><span id="taskCount">0</span> tasks</span>
+        </div>
+        <div id="taskList"></div>
+      </section>
+
+      <!-- ════════════ EMPLOYEES ════════════ -->
+      <section class="page" id="page-employees">
+        <div id="employeesContent"></div>
+      </section>
+
+      <!-- ════════════ BREAK MONITOR ════════════ -->
+      <section class="page" id="page-break">
+        <div class="break-panel">
+          <div class="card" style="padding:24px;">
+            <div class="label-upper" style="margin-bottom:4px;">Break Timer</div>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Office 12PM–9PM · Limit 60 min</p>
+            <div class="bp-timer" id="breakDisplay">00:00</div>
+            <button class="bp-btn" id="breakToggle">Start Break</button>
+            <p style="font-size:11px;color:var(--text-muted);" id="breakStatusText">Not on break</p>
+            <div class="break-stats">
+              <div class="bs"><div class="bs-label">Today</div><div class="bs-value" id="breakToday">0 min</div></div>
+              <div class="bs"><div class="bs-label">This Week</div><div class="bs-value" id="breakWeek">0 min</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════ ACTIVITY LOG ════════════ -->
+      <section class="page" id="page-feed">
+        <div class="feed-toolbar">
+          <select id="feedPerson"><option value="all">All People</option></select>
+          <select id="feedType"><option value="all">All Types</option><option value="company">Company</option><option value="dev">Dev</option></select>
+          <input type="text" id="feedSearch" placeholder="Search updates...">
+        </div>
+        <div class="card"><div class="card-body" id="feedContainer"></div></div>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const teamColors = {
+    Frontend: '#E54E1B', Backend: '#2B6EA8', Design: '#6B4C9A',
+    HR: '#D73A31', Management: '#2A7A4B', Executive: '#B8860B',
+    BD: '#1F7A7A', QA: '#8B5CF6',
+  };
+  const teamList = Object.keys(teamColors);
+
+  const employees = [
+    { id: 1, name: 'Ahmed Khan', role: 'Developer', team: 'Frontend', status: 'active', initials: 'AK' },
+    { id: 2, name: 'Sara Ali', role: 'Developer', team: 'Backend', status: 'focus', initials: 'SA' },
+    { id: 3, name: 'Fatima Noor', role: 'Project Manager', team: 'Management', status: 'active', initials: 'FN' },
+    { id: 4, name: 'Zaid Mirza', role: 'HR Lead', team: 'HR', status: 'active', initials: 'ZM' },
+    { id: 5, name: 'Omar Farooq', role: 'CEO', team: 'Executive', status: 'leave', initials: 'OF' },
+    { id: 6, name: 'Hira Tariq', role: 'UI/UX Designer', team: 'Design', status: 'active', initials: 'HT' },
+    { id: 7, name: 'Bilal Ahmed', role: 'Developer', team: 'Backend', status: 'break', initials: 'BA' },
+    { id: 8, name: 'Sana Malik', role: 'Business Dev', team: 'BD', status: 'active', initials: 'SM' },
+    { id: 9, name: 'Usman Khan', role: 'QA Engineer', team: 'QA', status: 'active', initials: 'UK' },
+    { id: 10, name: 'Ayesha Iqbal', role: 'Team Lead', team: 'Frontend', status: 'active', initials: 'AI' },
+    { id: 11, name: 'Rayan Aziz', role: 'BD Executive', team: 'BD', status: 'focus', initials: 'RA' },
+    { id: 12, name: 'Mariam Tariq', role: 'HR Coordinator', team: 'HR', status: 'active', initials: 'MT' },
+  ];
+  employees.forEach(e => e.color = teamColors[e.team] || '#999');
+
+  const projects = ['Platform API', 'Dashboard UI', 'Auth Module', 'Mobile App', 'Design System', 'Data Pipeline', 'Client Portal', 'Analytics Dashboard'];
+
+  let tasks = [
+    { id: 1, title: 'Implement user authentication flow', project: 'Auth Module', status: 'inprogress', owner: 0, pending: 3, collab: [{n:'Sara Ali', i:'SA', c:teamColors.Backend}] },
+    { id: 2, title: 'Design dashboard layout components', project: 'Dashboard UI', status: 'todo', owner: 0, pending: 0, collab: [] },
+    { id: 3, title: 'Set up CI/CD pipeline', project: 'Data Pipeline', status: 'inprogress', owner: 6, pending: 5, collab: [{n:'Ahmed Khan', i:'AK', c:teamColors.Frontend}] },
+    { id: 4, title: 'Build REST endpoints for task CRUD', project: 'Platform API', status: 'todo', owner: 1, pending: 0, collab: [] },
+    { id: 5, title: 'Create break timer widget component', project: 'Dashboard UI', status: 'done', owner: 0, pending: 0, collab: [] },
+    { id: 6, title: 'Write unit tests for auth service', project: 'Auth Module', status: 'inprogress', owner: 6, pending: 2, collab: [] },
+    { id: 7, title: 'Mobile responsive nav redesign', project: 'Mobile App', status: 'todo', owner: 5, pending: 0, collab: [{n:'Hira Tariq', i:'HT', c:teamColors.Design}] },
+    { id: 8, title: 'Quarterly review presentation', project: 'Platform API', status: 'done', owner: 2, pending: 0, collab: [] },
+    { id: 9, title: 'Employee satisfaction survey', project: 'Design System', status: 'inprogress', owner: 3, pending: 1, collab: [] },
+    { id: 10, title: 'Database indexing optimization', project: 'Data Pipeline', status: 'todo', owner: 1, pending: 0, collab: [{n:'Bilal Ahmed', i:'BA', c:teamColors.Backend}] },
+    { id: 11, title: 'Lead qualification pipeline setup', project: 'Client Portal', status: 'todo', owner: 7, pending: 0, collab: [{n:'Rayan Aziz', i:'RA', c:teamColors.BD}] },
+    { id: 12, title: 'QA test suite for auth module', project: 'Auth Module', status: 'inprogress', owner: 8, pending: 0, collab: [] },
+    { id: 13, title: 'Sprint planning & frontend code review', project: 'Dashboard UI', status: 'inprogress', owner: 9, pending: 0, collab: [{n:'Ahmed Khan', i:'AK', c:teamColors.Frontend}] },
+    { id: 14, title: 'Client onboarding presentation deck', project: 'Client Portal', status: 'todo', owner: 10, pending: 0, collab: [{n:'Sana Malik', i:'SM', c:teamColors.BD}] },
+    { id: 15, title: 'Employee wellness program planning', project: 'Design System', status: 'inprogress', owner: 11, pending: 0, collab: [] },
+  ];
+  let taskIdCounter = 11;
+
+  let checkinHistory = [
+    { id: 'c1', person: 0, type: 'company', time: '11:42 AM', prev: 'Continuing: Implement user authentication flow', continuedTaskIds: [1], newTasks: ['Design system doc','Component library audit'], blocker: 'Waiting on brand guidelines from PM' },
+    { id: 'c2', person: 1, type: 'company', time: '11:28 AM', prev: 'Continuing: Build REST endpoints for task CRUD', continuedTaskIds: [4], newTasks: ['Rate limiter middleware','API docs generation'], blocker: null },
+    { id: 'c3', person: 2, type: 'company', time: '11:35 AM', prev: 'Sprint planning — Done', continuedTaskIds: [], newTasks: ['Q2 roadmap review','Resource allocation'], blocker: null },
+    { id: 'c4', person: 3, type: 'company', time: '11:15 AM', prev: 'Continuing: Employee satisfaction survey', continuedTaskIds: [9], newTasks: ['Benefits overview PDF','New hire checklist'], blocker: null },
+    { id: 'c5', person: 5, type: 'company', time: '11:50 AM', prev: 'Investor deck prep', continuedTaskIds: [], newTasks: ['Team performance review','Budget Q3 forecast'], blocker: null },
+    { id: 'c6', person: 0, type: 'dev', time: '1:55 PM', prev: 'Continuing: Implement user authentication flow', continuedTaskIds: [1], newTasks: ['Button component states','Form validation hook'], blocker: null },
+    { id: 'c7', person: 6, type: 'company', time: '11:30 AM', prev: 'Figma prototype v2', continuedTaskIds: [], newTasks: ['Design token cleanup','Handoff to frontend'], blocker: 'Need final color palette sign-off' },
+    { id: 'c8', person: 6, type: 'dev', time: '2:05 PM', prev: 'Continuing: Write unit tests for auth service', continuedTaskIds: [6], newTasks: ['Dark mode variables','Theme switcher'], blocker: null },
+    { id: 'c9', person: 1, type: 'dev', time: '2:10 PM', prev: 'Continuing: Rate limiter', continuedTaskIds: [4], newTasks: ['Redis cache integration','Load testing'], blocker: 'Env access for staging server' },
+    { id: 'c10', person: 4, type: 'company', time: '11:05 AM', prev: 'Board meeting prep', continuedTaskIds: [], newTasks: ['Quarterly review','Strategy alignment'], blocker: null },
+    { id: 'c11', person: 7, type: 'company', time: '11:45 AM', prev: 'Client outreach', continuedTaskIds: [], newTasks: ['Lead list update','Intro deck v2'], blocker: null },
+    { id: 'c12', person: 8, type: 'company', time: '11:20 AM', prev: 'Test plan done', continuedTaskIds: [], newTasks: ['Auth module E2E tests','Bug triage'], blocker: 'Staging env access' },
+    { id: 'c13', person: 9, type: 'company', time: '11:38 AM', prev: 'Code review done', continuedTaskIds: [13], newTasks: ['Frontend sprint tasks','Component audit'], blocker: null },
+    { id: 'c14', person: 10, type: 'company', time: '11:10 AM', prev: 'Proposal draft', continuedTaskIds: [14], newTasks: ['Client presentation','ROI analysis'], blocker: null },
+    { id: 'c15', person: 11, type: 'company', time: '11:55 AM', prev: 'Survey design', continuedTaskIds: [15], newTasks: ['Wellness program feedback','Event planning'], blocker: null },
+  ];
+  let checkinIdCounter = 16;
+
+  const breakLog = { today: { sessions: [], total: 0 }, week: { mon: 45, tue: 70, wed: 55, thu: 0, fri: 0 } };
+  let leaveRecords = [
+    { id: 1, person: 4, date: 'Mon, May 11', type: 'Notified', reason: 'Doctor appointment', note: 'Approved by HR' },
+    { id: 2, person: 4, date: 'Wed, May 6', type: 'Auto-marked', reason: 'No check-in + no notification', note: 'HR updated' },
+  ];
+
+  const state = {
+    currentUser: 0,
+    viewingEmployee: -1,
+    onBreak: false, breakStart: null, breakElapsed: 0, breakInterval: null,
+    selectedWindow: 'company',
+    newTasks: [],
+    continueTasks: {},
+    prevTaskStatus: {},
+    profileTab: 'tasks',
+    statFilter: 'all',
+    teamFilter: 'all',
+  };
+
+  function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function $$(sel, ctx) { return [...(ctx || document).querySelectorAll(sel)]; }
+
+  function toast(msg) {
+    const t = $('#toast'); if (!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._hide); t._hide = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  $('#dateDisplay').textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  function updateSidebarUser() {
+    const e = employees[state.currentUser];
+    const av = $('.sidebar-user .u-avatar');
+    av.textContent = e.initials; av.style.background = e.color + '1a'; av.style.color = e.color;
+    $('.sidebar-user .u-name').textContent = e.name;
+    $('.sidebar-user .u-role').textContent = e.role.toUpperCase();
+    $('#topAvatar').textContent = e.initials;
+    $('#topAvatar').style.background = e.color + '1a';
+    $('#topAvatar').style.color = e.color;
+  }
+  updateSidebarUser();
+
+  function updateBadges() {
+    const curName = employees[state.currentUser].name;
+    const pendingTasks = tasks.filter(t => (t.owner === state.currentUser || t.collab.some(c => c.n === curName)) && t.status !== 'done').length;
+    const b1 = $('#badgeTasks'); if (b1) b1.textContent = pendingTasks;
+    const b2 = $('#badgeStandups'); if (b2) b2.textContent = pendingTasks > 0 ? pendingTasks : 0;
+    $('#wsMemberCount').textContent = employees.length;
+  }
+
+  const pageTitles = {
+    dashboard: 'Dashboard', standups: 'Standups', tasks: 'Tasks',
+    employees: 'Employees', break: 'Break Monitor', feed: 'Activity Log',
+  };
+
+  $$('.sidebar-nav a[data-page]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const page = link.dataset.page;
+      $$('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      link.classList.add('active');
+      $$('.page').forEach(p => p.classList.remove('active'));
+      const el = document.getElementById('page-' + page);
+      if (el) el.classList.add('active');
+      $('#pageTitle').textContent = pageTitles[page] || page;
+      state.viewingEmployee = -1;
+      if (page === 'dashboard') renderDashboard();
+      else if (page === 'standups') renderStandups();
+      else if (page === 'tasks') renderTasks();
+      else if (page === 'employees') renderEmployees();
+      else if (page === 'break') renderBreakPage();
+      else if (page === 'feed') renderFeed();
+    });
+  });
+
+  $('#quickTaskBtn').addEventListener('click', () => {
+    const val = prompt('Add a new task:');
+    if (val && val.trim()) {
+      tasks.push({ id: taskIdCounter++, title: val.trim(), project: projects[Math.floor(Math.random() * projects.length)], status: 'todo', owner: state.currentUser, pending: 0, collab: [] });
+      updateBadges();
+      const ap = $('.page.active');
+      if (ap && ap.id === 'page-tasks') renderTasks();
+      if (ap && ap.id === 'page-dashboard') renderDashboard();
+      toast('Task created: "' + val.trim() + '"');
+    } else if (val !== null) {
+      toast('Task cannot be empty');
+    }
+  });
+
+  // ─── USER SWITCHER ───
+  let switcherMenu = null;
+  $('#userSwitchBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    if (switcherMenu) { switcherMenu.remove(); switcherMenu = null; return; }
+    switcherMenu = document.createElement('div');
+    switcherMenu.className = 'switcher-dropdown';
+    switcherMenu.innerHTML = employees.map((e, i) =>
+      `<div class="sw-item ${i === state.currentUser ? 'active' : ''}" data-idx="${i}">
+        <span style="width:24px;height:24px;border-radius:50%;background:${e.color}1a;color:${e.color};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:9px;flex-shrink:0;">${e.initials}</span>
+        <span>${e.name}</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--text-muted)">${e.role}</span>
+      </div>`
+    ).join('');
+    document.body.appendChild(switcherMenu);
+    $$('.sw-item').forEach(el => {
+      el.addEventListener('click', () => {
+        switchUser(parseInt(el.dataset.idx));
+        switcherMenu.remove(); switcherMenu = null;
+      });
+    });
+  });
+  document.addEventListener('click', e => {
+    if (switcherMenu && !switcherMenu.contains(e.target) && e.target !== $('#userSwitchBtn')) {
+      switcherMenu.remove(); switcherMenu = null;
+    }
+  });
+
+  function switchUser(idx) {
+    if (idx < 0 || idx >= employees.length) return;
+    state.currentUser = idx;
+    updateSidebarUser();
+    updateBadges();
+    const activePage = $('.page.active');
+    if (activePage) {
+      const pid = activePage.id.replace('page-', '');
+      if (pid === 'dashboard') renderDashboard();
+      else if (pid === 'standups') renderStandups();
+      else if (pid === 'tasks') renderTasks();
+      else if (pid === 'employees') renderEmployees();
+      else if (pid === 'break') renderBreakPage();
+      else if (pid === 'feed') renderFeed();
+    }
+    toast('Switched to ' + employees[idx].name);
+  }
+
+  // ─── STATUS HELPERS ───
+  function statusLabel(s) {
+    return { active: 'Active', focus: 'Focus', break: 'On Break', leave: 'On Leave', absent: 'Absent' }[s] || s;
+  }
+  function statusColor(s) {
+    return { active: '#2A7A4B', focus: '#E54E1B', break: '#B8860B', leave: '#6A6A6A', absent: '#D73A31' }[s] || '#6A6A6A';
+  }
+  function statusBg(s) {
+    return { active: 'rgba(42,122,75,0.08)', focus: 'rgba(229,78,27,0.08)', break: 'rgba(184,134,11,0.08)', leave: 'rgba(106,106,106,0.08)', absent: 'rgba(215,58,49,0.08)' }[s] || 'rgba(106,106,106,0.08)';
+  }
+
+  // ─── DASHBOARD ───
+  function renderDashboard() {
+    const actives = employees.filter(e => e.status === 'active' || e.status === 'focus').length;
+    const breakC = employees.filter(e => e.status === 'break').length;
+    const leaveC = employees.filter(e => e.status === 'leave').length;
+    const focusC = employees.filter(e => e.status === 'focus').length;
+    const blockedC = checkinHistory.filter(c => c.blocker).length;
+
+    const statConfig = [
+      { key: 'present', label: 'Present', value: actives, cls: 'green' },
+      { key: 'focus', label: 'In Focus', value: focusC, cls: 'accent' },
+      { key: 'break', label: 'On Break', value: breakC, cls: '' },
+      { key: 'leave', label: 'On Leave', value: leaveC, cls: 'red' },
+      { key: 'blocked', label: 'Blocked Tasks', value: blockedC, cls: 'red' },
+      { key: 'projects', label: 'Active Projects', value: projects.length, cls: '' },
+    ];
+
+    $('#statRow').innerHTML = statConfig.map(s =>
+      `<div class="stat-cell ${state.statFilter === s.key ? 'active-filter' : ''}" data-stat="${s.key}" style="cursor:pointer;transition:all .15s;">
+        <div class="stat-label">${s.label}</div>
+        <div class="stat-value ${s.cls}">${s.value}</div>
+      </div>`
+    ).join('');
+
+    $$('.stat-cell[data-stat]').forEach(el => {
+      el.onclick = () => {
+        const key = el.dataset.stat;
+        state.statFilter = state.statFilter === key ? 'all' : key;
+        state.teamFilter = 'all';
+        renderDashboard();
+      };
+    });
+
+    // ── Filter Bar ──
+    const showFilter = state.statFilter !== 'all' || state.teamFilter !== 'all';
+    let filterBarHtml = '';
+    if (state.statFilter !== 'all') {
+      const labelMap = { present:'Present', focus:'In Focus', break:'On Break', leave:'On Leave', blocked:'Blocked Tasks', projects:'Active Projects' };
+      filterBarHtml += `<span style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);">Filtered: ${labelMap[state.statFilter] || state.statFilter}</span>`;
+    }
+    // Team filter dropdown
+    filterBarHtml += `<select id="dashTeamFilter" style="margin-left:auto;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;font-family:Inter,sans-serif;font-size:11px;color:var(--text-secondary);">
+      <option value="all">All Teams</option>
+      ${teamList.map(t => `<option value="${t}" ${state.teamFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
+    </select>`;
+    if (state.statFilter !== 'all' || state.teamFilter !== 'all') {
+      filterBarHtml += `<span class="label-upper" style="cursor:pointer;color:var(--red);font-size:10px;" id="clearDashboardFilter">✕ Clear</span>`;
+    }
+
+    $('#heroCardContainer').innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        ${filterBarHtml}
+      </div>
+      ${state.statFilter === 'blocked' ? renderBlockedView() : state.statFilter === 'projects' ? renderProjectsView() : renderHeroAndGrid()}
+    `;
+
+    const tf = $('#dashTeamFilter');
+    if (tf) tf.onchange = () => { state.teamFilter = tf.value; renderDashboard(); };
+    const clearBtn = $('#clearDashboardFilter');
+    if (clearBtn) clearBtn.onclick = () => { state.statFilter = 'all'; state.teamFilter = 'all'; renderDashboard(); };
+
+    // Employee card click → profile
+    $$('#heroCardContainer .emp-card[data-emp]').forEach(el => {
+      el.onclick = () => {
+        const idx = parseInt(el.dataset.emp);
+        state.viewingEmployee = idx;
+        $$('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+        const empLink = $('.sidebar-nav a[data-page="employees"]');
+        if (empLink) empLink.classList.add('active');
+        $$('.page').forEach(p => p.classList.remove('active'));
+        const pe = document.getElementById('page-employees');
+        if (pe) pe.classList.add('active');
+        $('#pageTitle').textContent = employees[idx].name;
+        renderEmployeeDetail();
+      };
+    });
+
+    if (state.statFilter !== 'blocked' && state.statFilter !== 'projects') {
+      // Activity feed always shows
+      const feed = checkinHistory.slice(0, 8);
+      $('#activityFeed').innerHTML = feed.map(c => {
+        const emp = employees[c.person];
+        const bHtml = c.blocker ? `<div class="f-blocker">⚠ ${c.blocker}</div>` : '';
+        return `<div class="feed-item">
+          <div class="f-avatar" style="background:${emp.color}1a;color:${emp.color}">${emp.initials}</div>
+          <div class="f-body">
+            <strong>${emp.name}</strong> <span style="color:var(--text-muted);font-size:10px;">${emp.team}</span> submitted ${c.type === 'company' ? 'company' : 'dev'} standup
+            <div>${checkinTasksList(c).join(' · ')}</div>
+            ${bHtml}
+            <div class="f-meta">${c.time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function yesterdaySummary(personIdx) {
+    const last = getLastCheckin(personIdx);
+    if (!last) return '<span style="color:var(--text-muted)">No previous standup</span>';
+    const parts = [];
+    if (last.continuedTaskIds) {
+      last.continuedTaskIds.forEach(tid => {
+        const t = tasks.find(x => x.id === tid);
+        if (t) parts.push(t.title);
+      });
+    }
+    if (last.newTasks) parts.push(...last.newTasks);
+    return parts.length ? parts.join(' · ') : '<span style="color:var(--text-muted)">Updated tasks</span>';
+  }
+
+  function checkinTasksList(c) {
+    const parts = [];
+    if (c.continuedTaskIds) {
+      c.continuedTaskIds.forEach(tid => {
+        const t = tasks.find(x => x.id === tid);
+        if (t) parts.push(t.title);
+      });
+    }
+    if (c.newTasks) parts.push(...c.newTasks);
+    if (!parts.length && c.tasks) parts.push(...c.tasks);
+    return parts;
+  }
+
+  function renderHeroAndGrid() {
+    const me = employees[state.currentUser];
+    let filtered = [...employees];
+    if (state.statFilter === 'present') filtered = filtered.filter(e => e.status === 'active' || e.status === 'focus');
+    else if (state.statFilter === 'focus') filtered = filtered.filter(e => e.status === 'focus');
+    else if (state.statFilter === 'break') filtered = filtered.filter(e => e.status === 'break');
+    else if (state.statFilter === 'leave') filtered = filtered.filter(e => e.status === 'leave');
+    if (state.teamFilter !== 'all') filtered = filtered.filter(e => e.team === state.teamFilter);
+
+    const hero = `<div class="hero-card" style="margin-bottom:12px;">
+      <div class="hero-avatar" style="background:${me.color}1a;color:${me.color}">${me.initials}</div>
+      <div class="hero-body">
+        <div class="hero-name">${me.name}</div>
+        <div class="hero-role">${me.role} · ${me.team} Team</div>
+        <div class="hero-status"><span class="dot" style="background:${statusColor(me.status)}"></span> ${statusLabel(me.status)}</div>
+        <div class="hero-section">
+          <div class="hs-label">Yesterday</div>
+          <div class="hs-value" style="font-size:11px;">${yesterdaySummary(state.currentUser)}</div>
+        </div>
+        <div class="hero-section">
+          <div class="hs-label">Working On</div>
+          <div class="hs-value">${tasks.find(t => (t.owner === state.currentUser || t.collab.some(c => c.n === me.name)) && t.status === 'inprogress')?.title || 'No active task'}</div>
+        </div>
+        <div class="hero-section">
+          <div class="hs-label">Next Up</div>
+          <div class="hs-value">${tasks.find(t => (t.owner === state.currentUser || t.collab.some(c => c.n === me.name)) && t.status === 'todo')?.title || 'No pending tasks'}</div>
+        </div>
+      </div>
+    </div>`;
+
+    const grid = `<div class="emp-grid">${filtered.map(e => {
+      const curTask = tasks.find(t => (t.owner === e.id - 1 || t.collab.some(c => c.n === e.name)) && t.status === 'inprogress');
+      const nextTask = tasks.find(t => (t.owner === e.id - 1 || t.collab.some(c => c.n === e.name)) && t.status === 'todo');
+      return `<div class="emp-card" data-emp="${e.id - 1}">
+        <div class="emp-top">
+          <div class="emp-avatar" style="background:${e.color}1a;color:${e.color}">${e.initials}</div>
+          <div>
+            <div class="emp-name">${e.name}</div>
+            <div class="emp-role">${e.role}</div>
+          </div>
+          <span class="emp-status" style="background:${statusBg(e.status)};color:${statusColor(e.status)};border-color:${statusColor(e.status)}33">${statusLabel(e.status)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin:4px 0 8px;">
+          <span style="font-size:10px;font-weight:500;background:${e.color}15;color:${e.color};padding:1px 8px;border-radius:20px;letter-spacing:.03em;">${e.team}</span>
+          <span style="font-size:10px;color:var(--text-muted);">${e.team === 'BD' ? 'Business' : ''}</span>
+        </div>
+        <div class="emp-body">
+          <div class="eb-label">Yesterday</div>
+          <div class="eb-value" style="font-size:11px;color:var(--text-secondary);">${yesterdaySummary(e.id - 1)}</div>
+          <div class="eb-label">Working on</div>
+          <div class="eb-value">${curTask?.title || '—'}</div>
+          <div class="eb-label">Next up</div>
+          <div class="eb-value" style="margin-bottom:0;">${nextTask?.title || '—'}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+
+    const alertsHtml = checkinHistory.filter(c => c.blocker).slice(0, 4).map(c => {
+      const emp = employees[c.person];
+      return `<div class="alert-item"><span class="alert-dot" style="background:var(--red)"></span><span class="alert-text"><strong>${emp.name}</strong> — ${c.blocker}</span><span class="alert-time">${c.time}</span></div>`;
+    }).join('') || '<div class="empty-state" style="padding:16px;">No active alerts</div>';
+
+    const gridAndAlerts = `<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+      <div><div class="label-upper" style="margin-bottom:8px;">${filtered.length} Team Member${filtered.length !== 1 ? 's' : ''}</div>${grid}</div>
+      <div><div class="label-upper" style="margin-bottom:8px;">Live Alerts</div><div class="card"><div class="card-body">${alertsHtml}</div></div></div>
+    </div>`;
+
+    return hero + gridAndAlerts;
+  }
+
+  function renderBlockedView() {
+    const blocked = checkinHistory.filter(c => c.blocker);
+    if (blocked.length === 0) return '<div class="empty-state">No blockers reported</div>';
+    return `<div class="card"><div class="card-body">${blocked.map(c => {
+      const emp = employees[c.person];
+      return `<div class="feed-item" style="border-color:var(--red-dim);">
+        <div class="f-avatar" style="background:${emp.color}1a;color:${emp.color}">${emp.initials}</div>
+        <div class="f-body"><strong>${emp.name}</strong> <span style="color:var(--text-muted);font-size:10px;">${emp.team}</span><div class="f-blocker" style="margin-top:4px;">⚠ ${c.blocker}</div><div class="f-meta">${c.time} · ${checkinTasksList(c).join(', ')}</div></div>
+      </div>`;
+    }).join('')}</div></div>`;
+  }
+
+  function renderProjectsView() {
+    const projData = projects.map(p => {
+      const projTasks = tasks.filter(t => t.project === p);
+      const members = [...new Set(projTasks.map(t => t.owner).concat(...projTasks.flatMap(t => t.collab.map(c => employees.findIndex(e => e.name === c.n)))).filter(i => i >= 0))];
+      const done = projTasks.filter(t => t.status === 'done').length;
+      return { name: p, total: projTasks.length, done, members: members.map(i => employees[i]).filter(Boolean) };
+    });
+    return `<div class="card"><div class="card-header"><h3>All Projects</h3></div><div class="card-body" style="padding:8px 14px;">${projData.map(p =>
+      `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:12.5px;">
+        <span style="font-weight:600;width:140px;">${p.name}</span>
+        <span style="color:var(--text-secondary);">${p.total} task${p.total !== 1 ? 's' : ''}</span>
+        <span style="color:var(--green);font-weight:500;">${p.done} done</span>
+        <span style="color:var(--text-muted);font-size:10px;">${p.members.map(m => m.name).join(', ') || '—'}</span>
+      </div>`
+    ).join('')}</div></div>`;
+  }
+
+  // ─── STANDUPS ───
+  function getLastCheckin(personIdx) {
+    return checkinHistory.find(c => c.person === personIdx);
+  }
+
+  function renderStandups() {
+    const winBtns = $$('.window-tabs button');
+    winBtns.forEach(b => {
+      b.onclick = () => {
+        winBtns.forEach(w => w.classList.remove('active'));
+        b.classList.add('active');
+        state.selectedWindow = b.dataset.window;
+      };
+    });
+    if (state.selectedWindow === 'dev') { winBtns[0].classList.remove('active'); winBtns[1].classList.add('active'); }
+    else { winBtns[0].classList.add('active'); winBtns[1].classList.remove('active'); }
+
+    const me = employees[state.currentUser];
+    const curName = me.name;
+    const lastCheckin = getLastCheckin(state.currentUser);
+
+    // ── Yesterday's Work (read-only) ──
+    const yesterdayDiv = $('#yesterdayWorkContainer');
+    if (lastCheckin) {
+      let yItems = [];
+      if (lastCheckin.continuedTaskIds) {
+        lastCheckin.continuedTaskIds.forEach(tid => {
+          const t = tasks.find(x => x.id === tid);
+          if (t) yItems.push(`<div class="yb-item"><span class="yb-dot"></span> ${t.title} <span style="font-size:10px;color:var(--text-muted)">(continued)</span></div>`);
+        });
+      }
+      if (lastCheckin.newTasks) {
+        lastCheckin.newTasks.forEach(nt => {
+          yItems.push(`<div class="yb-item"><span class="yb-dot muted"></span> ${nt} <span style="font-size:10px;color:var(--text-muted)">(new)</span></div>`);
+        });
+      }
+      if (lastCheckin.blocker) {
+        yItems.push(`<div class="yb-item"><span style="color:var(--red);font-size:12px;">⚠</span> Blocked: ${lastCheckin.blocker}</div>`);
+      }
+      yesterdayDiv.innerHTML = yItems.length ? yItems.join('') : '<em>No previous standup</em>';
+    } else {
+      yesterdayDiv.innerHTML = '<em>No previous standup — this is your first check-in!</em>';
+    }
+
+    // ── Continue Pending Tasks ──
+    const beginState = 'continue_';
+    if (!state.continueTasks) state.continueTasks = {};
+    const pendingTasks = tasks.filter(t => (t.owner === state.currentUser || t.collab.some(c => c.n === curName)) && t.status !== 'done');
+    const contDiv = $('#continueTasksContainer');
+    if (pendingTasks.length === 0) {
+      contDiv.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">No pending tasks to continue</div>';
+    } else {
+      contDiv.innerHTML = pendingTasks.map(t => {
+        const key = beginState + t.id;
+        if (!(key in state.continueTasks)) state.continueTasks[key] = true; // default selected
+        const sel = state.continueTasks[key];
+        return `<div class="continue-task ${sel ? 'selected' : ''}" data-ckey="${key}">
+          <div class="ct-indicator"></div>
+          <span class="ct-title">${t.title}</span>
+          ${t.pending > 0 ? `<span class="ct-badge">⏳ ${t.pending}d carry</span>` : ''}
+          <span class="ct-meta">${t.project}</span>
+        </div>`;
+      }).join('');
+      $$('.continue-task[data-ckey]').forEach(el => {
+        el.onclick = () => {
+          const key = el.dataset.ckey;
+          state.continueTasks[key] = !state.continueTasks[key];
+          el.classList.toggle('selected');
+        };
+      });
+    }
+
+    // ── New Tasks ──
+    updateNewTasksList();
+    $('#addTaskBtn').onclick = addNewTask;
+    $('#newTaskInput').onkeydown = e => { if (e.key === 'Enter') addNewTask(); };
+
+    // ── Submit ──
+    $('#submitCheckin').onclick = () => {
+      const blockers = $('#blockersInput').value.trim();
+      const newT = state.newTasks.filter(t => t.trim());
+      const selectedTaskIds = Object.keys(state.continueTasks)
+        .filter(k => k.startsWith(beginState) && state.continueTasks[k])
+        .map(k => parseInt(k.slice(beginState.length)));
+
+      if (selectedTaskIds.length === 0 && newT.length === 0) {
+        toast('Continue at least one task or add a new one'); return;
+      }
+
+      // Increment pending counter for continued tasks
+      selectedTaskIds.forEach(tid => {
+        const t = tasks.find(x => x.id === tid);
+        if (t) t.pending = (t.pending || 0) + 1;
+      });
+
+      // Create new tasks only for genuinely new work
+      if (newT.length > 0) {
+        newT.forEach(title => {
+          tasks.push({ id: taskIdCounter++, title, project: projects[Math.floor(Math.random() * projects.length)], status: 'todo', owner: state.currentUser, pending: 0, collab: [] });
+        });
+      }
+
+      // Build description of what was continued
+      const contNames = selectedTaskIds.map(tid => {
+        const t = tasks.find(x => x.id === tid);
+        return t ? t.title : '';
+      }).filter(Boolean);
+
+      checkinHistory.unshift({
+        id: 'c' + (checkinIdCounter++),
+        person: state.currentUser,
+        type: state.selectedWindow,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        prev: contNames.length ? 'Continuing: ' + contNames.join(', ') : 'New work',
+        continuedTaskIds: selectedTaskIds,
+        newTasks: [...newT],
+        blocker: blockers || null,
+      });
+
+      state.newTasks = [];
+      state.continueTasks = {};
+      $('#newTaskInput').value = '';
+      $('#blockersInput').value = '';
+      updateNewTasksList();
+      updateBadges();
+      toast('Standup submitted ✓ — ' + contNames.length + ' task(s) continued' + (newT.length ? ', ' + newT.length + ' new' : ''));
+      const dashLink = $('.sidebar-nav a[data-page="dashboard"]');
+      if (dashLink) setTimeout(() => dashLink.click(), 1000);
+    };
+  }
+
+  function addNewTask() {
+    const val = $('#newTaskInput').value.trim();
+    if (!val) return;
+    state.newTasks.push(val);
+    $('#newTaskInput').value = '';
+    updateNewTasksList();
+  }
+
+  function updateNewTasksList() {
+    const c = $('#newTasksContainer');
+    if (state.newTasks.length === 0) { c.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:2px 0;">No tasks added yet</div>'; return; }
+    c.innerHTML = state.newTasks.map((t, i) =>
+      `<div class="new-task-item"><span class="nt-text">${t}</span><button class="nt-del" data-idx="${i}">×</button></div>`
+    ).join('');
+    $$('.nt-del').forEach(b => { b.onclick = () => { state.newTasks.splice(parseInt(b.dataset.idx), 1); updateNewTasksList(); }; });
+  }
+
+  // ─── TASKS ───
+  function renderTasks() {
+    const fStatus = $('#taskFilterStatus').value;
+    const fProject = $('#taskFilterProject').value;
+    const projSel = $('#taskFilterProject');
+    const projs = [...new Set(tasks.map(t => t.project))];
+    if (projSel.options.length <= 1) projs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; projSel.appendChild(o); });
+
+    const curName = employees[state.currentUser].name;
+    let filtered = tasks.filter(t => t.owner === state.currentUser || t.collab.some(c => c.n === curName));
+    filtered = filtered.filter(t => (fStatus === 'all' || t.status === fStatus) && (fProject === 'all' || t.project === fProject));
+
+    $('#taskCount').textContent = filtered.length;
+    const container = $('#taskList');
+    if (filtered.length === 0) { container.innerHTML = '<div class="empty-state">No tasks match</div>'; return; }
+
+    container.innerHTML = filtered.map(t => {
+      const sl = { todo: 'To Do', inprogress: 'In Progress', done: 'Done' }[t.status];
+      const sc = { todo: '#6A6A6A', inprogress: '#E54E1B', done: '#2A7A4B' }[t.status];
+      const dc = t.status === 'done' ? 'done' : '';
+      const dt = t.status === 'done' ? 'done' : '';
+      const pend = t.pending > 0 ? `<span class="t-pend">⏳ ${t.pending}d carry</span>` : '';
+      const collab = t.collab.length > 0
+        ? `<div class="t-collab"><span>With:</span>${t.collab.map(c => `<span class="ca" style="background:${c.c}1a;color:${c.c}">${c.i}</span>`).join('')}<span>${t.collab.map(c => c.n).join(', ')}</span></div>`
+        : '';
+      const ownerName = employees[t.owner]?.name || '';
+      const nextStatus = { todo: 'inprogress', inprogress: 'done', done: 'todo' }[t.status];
+      const nextLabel = { todo: '→ Start', inprogress: '→ Complete', done: '→ Reopen' }[t.status];
+      return `<div class="task-item">
+        <div class="t-check ${dc}" data-task-id="${t.id}" style="border-color:${sc};cursor:pointer" title="${nextLabel}"></div>
+        <div class="t-body">
+          <div class="t-title ${dt}">${t.title} ${pend}</div>
+          <div class="t-meta">
+            <span class="tag">${t.project}</span>
+            <span style="color:${sc};font-weight:500;">${sl}</span>
+            <span>${ownerName}</span>
+          </div>
+          ${collab}
+        </div>
+      </div>`;
+    }).join('');
+    $$('#taskList .t-check[data-task-id]').forEach(el => {
+      el.addEventListener('click', () => {
+        const taskId = parseInt(el.dataset.taskId);
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const cycle = { todo: 'inprogress', inprogress: 'done', done: 'todo' };
+        const msgs = { todo: 'Task moved to In Progress', inprogress: 'Task completed ✓', done: 'Task reopened → To Do' };
+        task.status = cycle[task.status];
+        if (task.status === 'done') { task.pending = 0; }
+        updateBadges();
+        renderTasks();
+        const ap = $('.page.active');
+        if (ap && ap.id === 'page-dashboard') renderDashboard();
+        toast(msgs[task.status]);
+      });
+    });
+  }
+
+  // ─── EMPLOYEES ───
+  function renderEmployees() {
+    if (state.viewingEmployee >= 0) { renderEmployeeDetail(); return; }
+    const c = $('#employeesContent');
+    c.innerHTML = `
+      <div class="label-upper" style="margin-bottom:10px;">All Employees</div>
+      <div class="emp-grid" id="empFullGrid"></div>
+    `;
+    const grid = $('#empFullGrid');
+    grid.innerHTML = employees.map(e => {
+      const curTask = tasks.find(t => (t.owner === e.id - 1 || t.collab.some(c => c.n === e.name)) && t.status === 'inprogress');
+      const nextTask = tasks.find(t => (t.owner === e.id - 1 || t.collab.some(c => c.n === e.name)) && t.status === 'todo');
+      return `<div class="emp-card" data-emp="${e.id - 1}">
+        <div class="emp-top">
+          <div class="emp-avatar" style="background:${e.color}1a;color:${e.color}">${e.initials}</div>
+          <div>
+            <div class="emp-name">${e.name}</div>
+            <div class="emp-role">${e.role} · ${e.team}</div>
+          </div>
+          <span class="emp-status" style="background:${statusBg(e.status)};color:${statusColor(e.status)};border-color:${statusColor(e.status)}33">${statusLabel(e.status)}</span>
+        </div>
+        <div style="margin:2px 0 8px;"><span style="font-size:10px;font-weight:500;background:${e.color}15;color:${e.color};padding:1px 8px;border-radius:20px;">${e.team}</span></div>
+        <div class="emp-body">
+          <div class="eb-label">Yesterday</div>
+          <div class="eb-value" style="font-size:11px;color:var(--text-secondary);">${yesterdaySummary(e.id - 1)}</div>
+          <div class="eb-label">Working on</div>
+          <div class="eb-value">${curTask?.title || '—'}</div>
+          <div class="eb-label">Next up</div>
+          <div class="eb-value" style="margin-bottom:0;">${nextTask?.title || '—'}</div>
+        </div>
+      </div>`;
+    }).join('');
+    setTimeout(() => {
+      $$('#empFullGrid .emp-card[data-emp]').forEach(el => {
+        el.onclick = () => {
+          state.viewingEmployee = parseInt(el.dataset.emp);
+          renderEmployeeDetail();
+        };
+      });
+    }, 0);
+  }
+
+  function renderEmployeeDetail() {
+    const idx = state.viewingEmployee;
+    if (idx < 0) { renderEmployees(); return; }
+    const e = employees[idx];
+    const isSelf = idx === state.currentUser;
+    const c = $('#employeesContent');
+
+    c.innerHTML = `
+      <div class="emp-back" id="empBack">← Back to All Employees</div>
+      <div class="emp-detail">
+        <div class="ed-main">
+          <div class="profile-card">
+            <div class="pc-avatar" style="background:${e.color}1a;color:${e.color}">${e.initials}</div>
+            <div class="pc-name">${e.name}</div>
+            <div class="pc-role">${e.role} · ${e.team} Team${isSelf ? ' · You' : ''}</div>
+            <span class="pc-status" style="background:${statusBg(e.status)};color:${statusColor(e.status)};border-color:${statusColor(e.status)}33">${statusLabel(e.status)}</span>
+          </div>
+          <div class="detail-tabs" id="detailTabs">
+            <button class="active" data-tab="tasks">Tasks</button>
+            <button data-tab="checkins">Standups</button>
+            <button data-tab="breaks">Breaks</button>
+            <button data-tab="leaves">Leave</button>
+          </div>
+          <div id="detailContent"></div>
+        </div>
+        <div class="ed-side">
+          <div class="card">
+            <div class="card-header"><h3>Quick Info</h3></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
+              <div><strong style="color:var(--text-primary)">Team:</strong> ${e.team}</div>
+              <div><strong style="color:var(--text-primary)">Role:</strong> ${e.role}</div>
+              <div><strong style="color:var(--text-primary)">Status:</strong> ${statusLabel(e.status)}</div>
+              <div><strong style="color:var(--text-primary)">Yesterday:</strong> ${yesterdaySummary(idx)}</div>
+              <div><strong style="color:var(--text-primary)">Tasks:</strong> ${tasks.filter(t => t.owner === idx || t.collab.some(c => c.n === e.name)).length}</div>
+              <div><strong style="color:var(--text-primary)">Standups:</strong> ${checkinHistory.filter(c => c.person === idx).length}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#empBack').onclick = () => { state.viewingEmployee = -1; renderEmployees(); };
+
+    state.profileTab = 'tasks';
+    renderDetailTab(idx);
+    $$('#detailTabs button').forEach(b => {
+      b.onclick = () => {
+        $$('#detailTabs button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        state.profileTab = b.dataset.tab;
+        renderDetailTab(idx);
+      };
+    });
+  }
+
+  function renderDetailTab(idx) {
+    const e = employees[idx];
+    const container = $('#detailContent');
+    const t = state.profileTab;
+
+    if (t === 'tasks') {
+      const userTasks = tasks.filter(t => t.owner === idx || t.collab.some(c => c.n === e.name));
+      if (userTasks.length === 0) { container.innerHTML = '<div class="empty-state">No tasks</div>'; return; }
+      container.innerHTML = userTasks.map(tsk => {
+        const sc = { todo: '#6A6A6A', inprogress: '#E54E1B', done: '#2A7A4B' }[tsk.status];
+        const sl = { todo: 'To Do', inprogress: 'In Progress', done: 'Done' }[tsk.status];
+        const pend = tsk.pending > 0 ? ` <span style="color:var(--accent);font-size:11px;">⏳ ${tsk.pending}d</span>` : '';
+        const dc = tsk.status === 'done' ? 'done' : '';
+        const nextLabel = { todo: '→ Start', inprogress: '→ Complete', done: '→ Reopen' }[tsk.status];
+        return `<div class="task-item">
+          <div class="t-check ${dc}" data-detail-task="${tsk.id}" style="border-color:${sc};cursor:pointer;margin-top:2px;" title="${nextLabel}"></div>
+          <div class="t-body">
+            <div class="t-title" style="font-size:12.5px;">${tsk.title}${pend}</div>
+            <div class="t-meta">
+              <span class="tag">${tsk.project}</span>
+              <span style="color:${sc};font-weight:500;">${sl}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      $$('#detailContent .t-check[data-detail-task]').forEach(el => {
+        el.addEventListener('click', () => {
+          const taskId = parseInt(el.dataset.detailTask);
+          const task = tasks.find(t => t.id === taskId);
+          if (!task) return;
+          const cycle = { todo: 'inprogress', inprogress: 'done', done: 'todo' };
+          const msgs = { todo: '→ In Progress', inprogress: '✓ Done', done: '↺ Reopened' };
+          task.status = cycle[task.status];
+          if (task.status === 'done') task.pending = 0;
+          updateBadges();
+          renderDetailTab(idx);
+          const ap = $('.page.active');
+          if (ap && ap.id === 'page-dashboard') renderDashboard();
+          toast('Task ' + msgs[task.status]);
+        });
+      });
+    } else if (t === 'checkins') {
+      const uc = checkinHistory.filter(c => c.person === idx);
+      if (uc.length === 0) { container.innerHTML = '<div class="empty-state">No standups</div>'; return; }
+      let h = '<table class="dt-table"><thead><tr><th>Time</th><th>Type</th><th>Tasks</th><th>Blocker</th></tr></thead><tbody>';
+      uc.forEach(c => { h += `<tr><td>${c.time}</td><td>${c.type}</td><td>${checkinTasksList(c).join(', ')}</td><td>${c.blocker || '—'}</td></tr>`; });
+      h += '</tbody></table>';
+      container.innerHTML = h;
+    } else if (t === 'breaks') {
+      const s = breakLog.today.sessions;
+      if (s.length === 0) { container.innerHTML = '<div class="empty-state">No breaks today</div>'; return; }
+      let h = '<table class="dt-table"><thead><tr><th>Start</th><th>End</th><th>Duration</th></tr></thead><tbody>';
+      s.forEach(s => { h += `<tr><td>${s.start}</td><td>${s.end}</td><td>${s.dur} min</td></tr>`; });
+      h += '</tbody></table>';
+      container.innerHTML = h;
+    } else if (t === 'leaves') {
+      const ul = leaveRecords.filter(l => l.person === idx);
+      if (ul.length === 0) { container.innerHTML = '<div class="empty-state">No leave records</div>'; return; }
+      let h = '<table class="dt-table"><thead><tr><th>Date</th><th>Type</th><th>Reason</th><th>Note</th></tr></thead><tbody>';
+      ul.forEach(l => { h += `<tr><td>${l.date}</td><td>${l.type}</td><td>${l.reason}</td><td>${l.note}</td></tr>`; });
+      h += '</tbody></table>';
+      container.innerHTML = h;
+    }
+  }
+
+  // ─── BREAK ───
+  function renderBreakPage() {
+    const btn = $('#breakToggle');
+    const display = $('#breakDisplay');
+    const statusText = $('#breakStatusText');
+    const todayEl = $('#breakToday');
+    const weekEl = $('#breakWeek');
+
+    const weekTotal = Object.values(breakLog.week).reduce((a, b) => a + b, 0);
+    weekEl.textContent = (weekTotal + breakLog.today.total) + ' min';
+
+    if (state.onBreak) {
+      btn.textContent = 'End Break'; btn.classList.add('running');
+      const m = Math.floor(state.breakElapsed); const s = Math.floor((state.breakElapsed - m) * 60);
+      display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      display.className = 'bp-timer ' + (state.breakElapsed >= 60 ? 'danger' : state.breakElapsed >= 45 ? 'warning' : '');
+      statusText.textContent = state.breakElapsed >= 60 ? '⚠ Overtime!' : 'On break';
+    } else {
+      btn.textContent = 'Start Break'; btn.classList.remove('running');
+      display.textContent = '00:00'; display.className = 'bp-timer';
+      statusText.textContent = 'Not on break';
+    }
+    todayEl.textContent = Math.round(breakLog.today.total + (state.onBreak ? state.breakElapsed : 0)) + ' min';
+
+    btn.onclick = () => {
+      if (!state.onBreak) {
+        state.onBreak = true;
+        state.breakStart = Date.now();
+        state.breakElapsed = 0;
+        btn.textContent = 'End Break'; btn.classList.add('running');
+        statusText.textContent = 'On break';
+        if (state.breakInterval) clearInterval(state.breakInterval);
+        state.breakInterval = setInterval(() => {
+          state.breakElapsed = (Date.now() - state.breakStart) / 1000 / 60;
+          const m = Math.floor(state.breakElapsed); const s = Math.floor((state.breakElapsed - m) * 60);
+          display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          if (state.breakElapsed >= 60) { display.className = 'bp-timer danger'; statusText.textContent = '⚠ Overtime!'; }
+          else if (state.breakElapsed >= 45) { display.className = 'bp-timer warning'; statusText.textContent = 'Warning: approaching limit'; }
+          todayEl.textContent = Math.round(breakLog.today.total + state.breakElapsed) + ' min';
+        }, 200);
+        employees[state.currentUser].status = 'break';
+        toast('Break started');
+      } else {
+        state.onBreak = false;
+        if (state.breakInterval) { clearInterval(state.breakInterval); state.breakInterval = null; }
+        const total = Math.round(state.breakElapsed);
+        if (total > 0) { breakLog.today.sessions.push({ start: '—', end: '—', dur: total }); breakLog.today.total += total; }
+        btn.textContent = 'Start Break'; btn.classList.remove('running');
+        display.textContent = '00:00'; display.className = 'bp-timer';
+        statusText.textContent = total > 0 ? `Logged ${total} min` : 'Break ended';
+        todayEl.textContent = breakLog.today.total + ' min';
+        employees[state.currentUser].status = 'active';
+        state.breakElapsed = 0;
+        toast(total > 0 ? `Break logged: ${total} min` : 'Break ended');
+      }
+    };
+  }
+
+  // ─── FEED ───
+  function renderFeed() {
+    const pf = $('#feedPerson');
+    if (pf.options.length <= 1) employees.forEach((e, i) => { const o = document.createElement('option'); o.value = i; o.textContent = e.name; pf.appendChild(o); });
+
+    function filterRender() {
+      const pv = pf.value; const tv = $('#feedType').value; const sv = $('#feedSearch').value.toLowerCase();
+      let items = checkinHistory.filter(c =>
+        (pv === 'all' || c.person === parseInt(pv)) &&
+        (tv === 'all' || c.type === tv) &&
+        (!sv || checkinTasksList(c).some(t => t.toLowerCase().includes(sv)) || (c.blocker && c.blocker.toLowerCase().includes(sv)) || employees[c.person].name.toLowerCase().includes(sv))
+      );
+      const container = $('#feedContainer');
+      if (items.length === 0) { container.innerHTML = '<div class="empty-state">No matching updates</div>'; return; }
+      container.innerHTML = items.map(c => {
+        const emp = employees[c.person];
+        const bHtml = c.blocker ? `<div class="f-blocker">⚠ ${c.blocker}</div>` : '';
+        return `<div class="feed-item">
+          <div class="f-avatar" style="background:${emp.color}1a;color:${emp.color}">${emp.initials}</div>
+          <div class="f-body">
+            <strong>${emp.name}</strong> · ${c.type === 'company' ? 'Company standup' : 'Dev standup'}
+            <div>${checkinTasksList(c).join(' · ')}</div>
+            ${bHtml}
+            <div class="f-meta">${c.time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    pf.onchange = filterRender;
+    $('#feedType').onchange = filterRender;
+    $('#feedSearch').oninput = filterRender;
+    filterRender();
+  }
+
+  // ─── CARRY-FORWARD SIMULATION ───
+  function simulateCarryForward() {
+    tasks.forEach(t => {
+      if (t.status === 'inprogress') t.pending += 1;
+    });
+    updateBadges();
+    const ap = $('.page.active');
+    if (ap && ap.id === 'page-tasks') renderTasks();
+  }
+
+  // ─── DEMO SIMULATION ───
+  function startDemoSimulation() {
+    // Random status changes every 12s to make dashboard feel alive
+    setInterval(() => {
+      const idx = Math.floor(Math.random() * employees.length);
+      const emp = employees[idx];
+      if (emp.status === 'active' && Math.random() > 0.5) {
+        emp.status = 'focus';
+        setTimeout(() => {
+          if (emp.status === 'focus') emp.status = 'active';
+          const a = $('.page.active');
+          if (a && a.id === 'page-dashboard') renderDashboard();
+        }, 8000 + Math.random() * 4000);
+        const a = $('.page.active');
+        if (a && a.id === 'page-dashboard') renderDashboard();
+      }
+    }, 12000);
+
+    // Random simulated standup entry every 25s
+    setInterval(() => {
+      const randEmp = Math.floor(Math.random() * employees.length);
+      const demoTasks = ['Code review', 'Bug fix #' + Math.floor(Math.random()*999), 'Documentation update', 'Sprint planning', 'Component testing', 'API integration'];
+      const count = Math.floor(Math.random() * 2) + 1;
+      const picked = [];
+      for (let i = 0; i < count; i++) picked.push(demoTasks[Math.floor(Math.random() * demoTasks.length)]);
+      checkinHistory.unshift({
+        id: 'c_demo_' + Date.now(),
+        person: randEmp,
+        type: Math.random() > 0.5 ? 'company' : 'dev',
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        prev: 'Ongoing work',
+        continuedTaskIds: [],
+        newTasks: picked,
+        blocker: null,
+      });
+      if (checkinHistory.length > 40) checkinHistory.pop();
+      const a = $('.page.active');
+      if (a && (a.id === 'page-dashboard' || a.id === 'page-feed')) {
+        if (a.id === 'page-dashboard') renderDashboard();
+        else renderFeed();
+      }
+    }, 25000);
+
+    // Carry-forward increment every 20s
+    setInterval(simulateCarryForward, 20000);
+  }
+
+  // ─── FILTERS ───
+  $('#taskFilterStatus').addEventListener('change', renderTasks);
+  $('#taskFilterProject').addEventListener('change', renderTasks);
+
+  // ─── PRE-FILL STANDUP WITH DEMO TASKS ───
+  state.newTasks = ['Refactor auth middleware', 'Update API documentation', 'Fix pagination bug'];
+
+  // ─── BREAK TIMER SYNC: when navigating away, keep employee status ───
+  // (already handled via employees[].status = 'break' / 'active')
+
+  // ─── WELCOME TOAST ───
+  setTimeout(() => {
+    toast('Welcome to PulseDesk · Click ↻ to switch users');
+  }, 500);
+  setTimeout(() => {
+    toast('💡 Try: Submit a standup → see tasks + dashboard update');
+  }, 3000);
+
+  // ─── INIT ───
+  renderDashboard();
+  updateBadges();
+  startDemoSimulation();
+  console.log('%cPulseDesk v0.4 — Full Interactive Demo', 'font-size:18px;font-weight:bold;color:#E54E1B');
+  console.log('%cFlows: Standup → Tasks · Task click → cycle status · Break → Dashboard sync · Live simulation', 'color:#6A6A6A');
+</script>
+</body>
+</html>
